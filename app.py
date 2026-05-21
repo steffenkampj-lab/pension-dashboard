@@ -7,7 +7,6 @@ import streamlit as st
 # -----------------------------
 # Konfiguration
 # -----------------------------
-REFRESH_SECONDS = 15 * 60  # 15 min standard
 VIX_THRESHOLD = 20
 MA_WINDOW = 200
 
