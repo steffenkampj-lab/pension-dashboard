@@ -56,13 +56,17 @@ HIGH_BETA_BUCKETS = {"WSML (Small Cap)", "CNDX (Nasdaq)", "SMH (Semis)", "URNU (
 # -----------------------------
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36"
 
-@st.cache_data(ttl=REFRESH_SECONDS, show_spinner=False)
-def yahoo_chart(symbol: str, range_: str = "2y", interval: str = "1d") -> dict:
-    """Henter data fra Yahoo v8 chart endpoint (uofficiel)."""
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range={range_}&interval={interval}"
-    r = requests.get(url, headers={"User-Agent": UA}, timeout=20)
-    r.raise_for_status()
-    return r.json()
+# --- Refresh interval (10/15 min) uden global ---
+if "refresh_seconds" not in st.session_state:
+    st.session_state["refresh_seconds"] = 15 * 60  # default 15 min
+
+refresh = st.selectbox("Refresh interval", ["15 min (standard)", "10 min"], index=0)
+
+new_seconds = 15 * 60 if refresh.startswith("15") else 10 * 60
+
+if new_seconds != st.session_state["refresh_seconds"]:
+    st.session_state["refresh_seconds"] = new_seconds
+    st.cache_data.clear()  # tøm cache så næste load henter friske data
 
 
 def parse_ohlc_close(payload: dict) -> pd.DataFrame:
@@ -184,9 +188,14 @@ def compute_buckets(latest_signals: dict, latest_vix: float) -> pd.DataFrame:
 st.set_page_config(page_title="Pension Dashboard", layout="wide")
 
 # Auto-refresh
-st.markdown("""<script>
-setTimeout(function(){ window.location.reload(); }, %d);
-</script>""" % (REFRESH_SECONDS*1000), unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <script>
+    setTimeout(function(){{ window.location.reload(); }}, {st.session_state["refresh_seconds"]*1000});
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 
 st.title("Executive Dashboard – MA200 + VIX (daglige closes) + Yahoo live snapshot")
 
