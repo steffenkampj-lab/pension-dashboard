@@ -204,7 +204,6 @@ with st.sidebar:
     refresh = st.selectbox("Refresh interval", ["15 min (standard)", "10 min"], index=0)
     if refresh.startswith("10"):
         st.cache_data.clear()
-        global REFRESH_SECONDS
         REFRESH_SECONDS = 10*60
     st.caption("Bemærk: Yahoo endpoint er uofficiel. Hold refresh moderat.")
 
